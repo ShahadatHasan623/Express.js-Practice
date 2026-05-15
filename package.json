@@ -17,6 +17,7 @@
     "@types/pg": "^8.20.0"
   },
   "dependencies": {
+    "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "pg": "^8.20.0",
     "tsx": "^4.22.0"

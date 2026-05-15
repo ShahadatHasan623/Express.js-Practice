@@ -5,14 +5,14 @@ import express, {
 } from "express";
 import { CLIENT_RENEG_LIMIT } from "node:tls";
 import { Pool } from "pg";
+import config from "./config/config";
 const app: Application = express();
 const port = 3000;
 
 app.use(express.json());
 
 const pool = new Pool({
-  connectionString:
-    "postgresql://neondb_owner:npg_wf4YXSEhg8zI@ep-shiny-frost-apji3h8w-pooler.c-7.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
+  connectionString:config.connection_string,
 });
 
 const initDB = async () => {
@@ -110,7 +110,7 @@ app.get("/api/users/:id", async (req: Request, res: Response) => {
 
 app.put("/api/users/:id", async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { name, email, password,is_active,age} = req.body;
+  const { name, email, password, is_active, age } = req.body;
   try {
     const result = await pool.query(
       `
@@ -123,7 +123,7 @@ app.put("/api/users/:id", async (req: Request, res: Response) => {
     WHERE id = $6
     RETURNING *;
     `,
-      [name, email, password,is_active,age, id],
+      [name, email, password, is_active, age, id],
     );
     console.log(result.rows);
     if (result.rows.length === 0) {
@@ -144,7 +144,31 @@ app.put("/api/users/:id", async (req: Request, res: Response) => {
     });
   }
 });
+app.delete("/api/users/:id", async (req: Request, res: Response) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(`
+      DELETE FROM users WHERE id=$1
+      `,[id])
 
-app.listen(port, () => {
-  console.log(`server app listening on port ${port}`);
+      if(result.rowCount === 0){
+        return res.status(404).json({
+          message:"user Not found",
+          data:{}
+        })
+      }
+      return res.status(200).json({
+        message:"users deleted successfully",
+        data:{}
+      })
+  } catch (error:any) {
+    res.status(500).json({
+      message:error.message,
+      error:error
+    })
+  }
+});
+
+app.listen(config.port, () => {
+  console.log(`server app listening on port ${config.port}`);
 });
