@@ -74,7 +74,7 @@ app.get("/api/users", async (req: Request, res: Response) => {
       data: result.rows,
     });
   } catch (error: any) {
-   return res.status(500).json({
+    return res.status(500).json({
       message: error.message,
       error: error,
     });
@@ -90,21 +90,58 @@ app.get("/api/users/:id", async (req: Request, res: Response) => {
             `,
       [id],
     );
-    if(result.rows.length === 0){
-       return res.status(404).json({
-            meassge:"User Not Found",
-            data:{}
-        })
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        meassge: "User Not Found",
+        data: {},
+      });
     }
     return res.status(200).json({
-        message:"Get the single users",
-        data:result.rows[0]
-    })
-  } catch (error:any) {
+      message: "Get the single users",
+      data: result.rows[0],
+    });
+  } catch (error: any) {
     return res.status(500).json({
-        message:error.message,
-        error:error
-    })
+      message: error.message,
+      error: error,
+    });
+  }
+});
+
+app.put("/api/users/:id", async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { name, email, password,is_active,age} = req.body;
+  try {
+    const result = await pool.query(
+      `
+      UPDATE users SET 
+      name = COALESCE($1, name),
+      email = COALESCE($2, email),
+      password = COALESCE($3, password),
+      is_active = COALESCE($4, is_active),
+      age =COALESCE($5, age)
+    WHERE id = $6
+    RETURNING *;
+    `,
+      [name, email, password,is_active,age, id],
+    );
+    console.log(result.rows);
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Not Found",
+        data: {},
+      });
+    }
+    return res.status(200).json({
+      message: "user updated successfully",
+      data: result.rows[0],
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      message: error.message,
+      error: error,
+    });
   }
 });
 
